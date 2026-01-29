@@ -57,9 +57,7 @@ public class Kolmkola
             throw new ArgumentException("Chord name cannot be empty.", nameof(name));
         }
 
-        var normalized = name.Trim().Replace("♭", "b", StringComparison.OrdinalIgnoreCase)
-            .Replace("♯", "#", StringComparison.OrdinalIgnoreCase)
-            .ToUpperInvariant();
+        var normalized = NormalizeName(name);
 
         if (!NameToOffset.TryGetValue(normalized, out var offset))
         {
@@ -67,5 +65,31 @@ public class Kolmkola
         }
 
         return 60 + offset;
+    }
+
+    public static Kolmkola Create(string rootName)
+    {
+        var normalized = NormalizeName(rootName);
+
+        return normalized switch
+        {
+            "C" => new CKolmkola(),
+            "F" => new FKolmkola(),
+            "G" => new GKolmkola(),
+            _ => new Kolmkola(NameToMidi(rootName))
+        };
+    }
+
+    private static string NormalizeName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return string.Empty;
+        }
+
+        return name.Trim()
+            .Replace("♭", "b", StringComparison.OrdinalIgnoreCase)
+            .Replace("♯", "#", StringComparison.OrdinalIgnoreCase)
+            .ToUpperInvariant();
     }
 }
