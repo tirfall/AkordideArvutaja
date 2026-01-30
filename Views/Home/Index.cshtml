@@ -1,8 +1,63 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model AkordideArvutaja.ViewModels.LuguViewModel
+@{
+    ViewData["Title"] = "Akordide arvutaja";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="mb-4">
+    <h1 class="display-5">Akordide arvutaja</h1>
+    <p class="text-muted">Sisesta taktide akorditähed komadega eraldatult (nt C,F,G). Vali, kas soovid näha MIDI-noodinumbrite või noodinimede väljundit.</p>
 </div>
+
+<form method="get" class="row g-3 mb-4">
+    <div class="col-12 col-lg-6">
+        <label class="form-label" for="chords">Akordid</label>
+        <input class="form-control" id="chords" name="chords" value="@Model.ChordsInput" placeholder="C,F,G" />
+    </div>
+    <div class="col-12 col-lg-3">
+        <label class="form-label" for="format">Väljund</label>
+        <select class="form-select" id="format" name="format">
+            <option value="numbers" selected="@(Model.OutputFormat == "numbers")">Noodinumbrid</option>
+            <option value="names" selected="@(Model.OutputFormat == "names")">Noodinimed</option>
+        </select>
+    </div>
+    <div class="col-12 col-lg-3 d-flex align-items-end">
+        <button class="btn btn-primary w-100" type="submit">Arvuta</button>
+    </div>
+</form>
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+@if (Model.Taktid.Count > 0)
+{
+    <div class="card shadow-sm">
+        <div class="card-header">Taktide tulemused</div>
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">Takt</th>
+                        <th scope="col">Põhitoon</th>
+                        <th scope="col">Kolmkõla noodid</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var takt in Model.Taktid)
+                {
+                    <tr>
+                        <td>@takt.Index</td>
+                        <td>@(Model.OutputFormat == "names" ? takt.RootName : takt.Root)</td>
+                        <td>
+                            @(Model.OutputFormat == "names"
+                                ? string.Join(", ", takt.NoteNames)
+                                : string.Join(", ", takt.Notes))
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

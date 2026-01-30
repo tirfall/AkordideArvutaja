@@ -10,28 +10,26 @@ public class AkordidController : ControllerBase
     [HttpGet]
     public IActionResult Get([FromQuery] string chords, [FromQuery] string? format)
     {
-        var lugu = new Lugu();
-        var chordNames = chords.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-        foreach (var chordName in chordNames)
+        if (string.IsNullOrWhiteSpace(chords))
         {
-            lugu.LisaTakt(new Kolmkola(chordName));
+            return BadRequest(new { Error = "Chord input cannot be empty." });
         }
 
-        var outputFormat = (format ?? "numbers").Trim().ToLowerInvariant();
-        var taktideInfo = lugu.Taktid.Select((kolmkola, index) => new
+        try
         {
-            Index = index + 1,
-            Root = kolmkola.Root,
-            RootName = Kolmkola.MidiToName(kolmkola.Root),
-            Notes = kolmkola.GetNotes(),
-            NoteNames = kolmkola.GetNoteNames()
-        });
+            var lugu = LuguParser.FromChordInput(chords);
+            var outputFormat = string.Equals(format, "names", StringComparison.OrdinalIgnoreCase) ? "names" : "numbers";
+            var taktideInfo = lugu.GetTaktidInfo();
 
-        return outputFormat switch
+            return outputFormat switch
+            {
+                "names" => Ok(new { Taktid = taktideInfo.Select(t => new { t.Index, t.RootName, t.NoteNames }) }),
+                _ => Ok(new { Taktid = taktideInfo.Select(t => new { t.Index, t.Root, t.Notes }) })
+            };
+        }
+        catch (ArgumentException ex)
         {
-            "names" => Ok(new { Taktid = taktideInfo.Select(t => new { t.Index, t.RootName, t.NoteNames }) }),
-            _ => Ok(new { Taktid = taktideInfo.Select(t => new { t.Index, t.Root, t.Notes }) })
-        };
+            return BadRequest(new { Error = ex.Message });
+        }
     }
 }
